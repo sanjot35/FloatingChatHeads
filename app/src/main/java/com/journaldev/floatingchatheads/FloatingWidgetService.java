@@ -6,12 +6,15 @@ import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.WindowManager;
+import android.widget.RelativeLayout;
 
 import com.andremion.counterfab.CounterFab;
 
@@ -67,12 +70,26 @@ public class FloatingWidgetService extends Service {
             mWindowManager.addView(mOverlayView, params);
 
             Display display = mWindowManager.getDefaultDisplay();
-            Point size = new Point();
+            final Point size = new Point();
             display.getSize(size);
-            mWidth = size.x;
 
             counterFab = (CounterFab) mOverlayView.findViewById(R.id.fabHead);
             counterFab.setCount(1);
+
+
+            final RelativeLayout layout = (RelativeLayout) mOverlayView.findViewById(R.id.layout);
+            ViewTreeObserver vto = layout.getViewTreeObserver();
+            vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    layout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    int width = layout.getMeasuredWidth();
+
+                    //To get the accurate middle of the screen we subtract the width of the floating widget.
+                    mWidth = size.x - width;
+
+                }
+            });
 
             counterFab.setOnTouchListener(new View.OnTouchListener() {
                 private int initialX;
